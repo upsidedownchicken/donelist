@@ -56,7 +56,7 @@ class Slim_Http_Response {
     /**
      * @var string
      */
-    protected $httpVersion = '1.1';
+    protected $httpVersion = '1.0';
 
     /**
      * @var int HTTP status code
