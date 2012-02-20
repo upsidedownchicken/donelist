@@ -71,6 +71,7 @@ EOT;
 
 //POST route
 $app->post('/', function () {
+  $app = new Slim();
   $subject = $app->request->post('s');
   if(is_null($subject)){
     $app->halt(400);
