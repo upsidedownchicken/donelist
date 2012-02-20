@@ -41,14 +41,26 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 //GET route
-$app->get('/', function () {
+$app->get('/', function () use ($app) {
   $items = array();
   $done = DoneList::find_all();
-  foreach($done as $item){
-    array_push($items, '<li>'.$item['created_at'].' '.$item['subject'].'</li>');
+
+  if('application/json' == $app->request()->getContentType()){
+    foreach($done as $item){
+      array_push($items, array('created_at' => $item['created_at'], 'subject' => $item['subject']));
+    }
+
+    $response = $app->response();
+    $response->header('Content-Type', 'application/json');
+    echo(json_encode($items));
   }
-  $done_list = implode('', $items);
-  $template = <<<EOT
+  else {
+
+    foreach($done as $item){
+      array_push($items, '<li>'.$item['created_at'].' '.$item['subject'].'</li>');
+    }
+    $done_list = implode('', $items);
+    $template = <<<EOT
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -130,7 +142,8 @@ $app->get('/', function () {
   </body>
 </html>
 EOT;
-  echo $template;
+    echo $template;
+  }
 });
 
 //POST route
