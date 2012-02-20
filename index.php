@@ -42,7 +42,7 @@ $app->get('/', function () {
   $items = array();
   $done = DoneList::find_all();
   foreach($done as $item){
-    array_push($items, '<li>'.$item->created_at.' '.$item->subject.'</li>');
+    array_push($items, '<li>'.$item['created_at'].' '.$item['subject'].'</li>');
   }
   $template = <<<EOT
 <!DOCTYPE html>
