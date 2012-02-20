@@ -68,7 +68,11 @@ EOT;
 
 //POST route
 $app->post('/post', function () {
-    echo 'This is a POST route';
+  $subject = $app->request->post('s');
+  if(is_null($subject)){
+    $app->halt(400);
+  }
+  DoneList::create('subject' => $subject);
 });
 
 //PUT route
