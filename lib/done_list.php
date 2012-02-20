@@ -14,7 +14,7 @@ class DoneList {
   }
 
   private static function use_db(){
-    mysql_connect("mysql-shared-02.phpfog.com", "Slim-29435", "hMVowjX8j9JYQu");
+    mysql_connect("mysql-shared-02.phpfog.com", "Slim-29435", "x3LFk8EyGmhNib");
     mysql_select_db("donelist_phpfogapp_com");
   }
 }
