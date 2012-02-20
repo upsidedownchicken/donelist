@@ -71,7 +71,7 @@ EOT;
 
 //POST route
 $app->post('/', function () use ($app) {
-  $subject = $app->request->post('s');
+  $subject = $app->request()->post('s');
   if(is_null($subject)){
     $app->halt(400);
   }
