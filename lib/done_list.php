@@ -29,7 +29,7 @@ class DoneList {
 
   public function save(){
     self::use_db();
-    $sql = sprintf("insert into done_items (created_at, subject) values(now(), %s"),
+    $sql = sprintf("insert into done_items (created_at, subject) values(now(), %s",
       mysql_real_escape_string($this->subject));
     if(!mysql_query($sql)){
       throw new Exception(mysql_error());
