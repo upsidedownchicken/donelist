@@ -75,7 +75,7 @@ $app->post('/post', function () {
   if(is_null($subject)){
     $app->halt(400);
   }
-  DoneList::create('subject' => $subject);
+  DoneList::create(array('subject' => $subject));
 });
 
 //PUT route
