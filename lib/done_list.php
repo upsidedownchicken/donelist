@@ -2,7 +2,7 @@
 class DoneList {
   public static function create($opts){
     $done = new DoneList($opts);
-    return $done->save;
+    return $done->save();
   }
 
   public static function find_all(){
