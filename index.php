@@ -44,6 +44,7 @@ $app->get('/', function () {
   foreach($done as $item){
     array_push($items, '<li>'.$item['created_at'].' '.$item['subject'].'</li>');
   }
+  $done_list = implode('', $items);
   $template = <<<EOT
 <!DOCTYPE html>
 <html>
@@ -57,7 +58,7 @@ $app->get('/', function () {
     </header>
     <h1>Done!</h1>
     <ol>
-      $done
+      $done_list
     </ol>
   </body>
 </html>
