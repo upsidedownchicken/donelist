@@ -37,6 +37,9 @@ $app = new Slim();
  * The routes below work with PHP >= 5.3.
  */
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 //GET route
 $app->get('/', function () {
   $items = array();
