@@ -10,6 +10,10 @@ class DoneList {
     $done = array();
     $q = mysql_query("select * from done_items order by created_at desc");
 
+    if(!$q){
+      throw new Exception(mysql_error());
+    }
+
     while($row = mysql_fetch_assoc($q)){
       array_push($done, $row);
     }
@@ -38,8 +42,13 @@ class DoneList {
   }
 
   private static function use_db(){
-    mysql_connect("mysql-shared-02.phpfog.com", "Slim-29435", "x3LFk8EyGmhNib");
-    mysql_select_db("donelist_phpfogapp_com");
+    if(!mysql_connect(getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASS'))){
+      throw new Exception(mysql_error());
+    }
+
+    if(!mysql_select_db(getenv('DB_NAME'))){
+      throw new Exception(mysql_error());
+    }
   }
 }
 ?>
