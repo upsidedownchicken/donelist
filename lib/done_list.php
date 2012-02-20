@@ -34,7 +34,7 @@ class DoneList {
     if(!mysql_query($sql)){
       throw new Exception(mysql_error());
     }
-    return self;
+    return $this;
   }
 
   private static function use_db(){
