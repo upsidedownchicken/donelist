@@ -8,6 +8,11 @@
  * directory elsewhere, ensure that it is added to your include path
  * or update this file path as needed.
  */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require('vendor/openid.php');
 require 'Slim/Slim.php';
 require 'lib/done_list.php';
 
@@ -19,6 +24,12 @@ require 'lib/done_list.php';
  * Refer to the online documentation for available settings.
  */
 $app = new Slim();
+
+/*
+$app->add('Slim_Middleware_SessionCookie', array(
+  'secret' => 'FDq8PMCb2GUzuHNBEsGpFRTFgEcyHKUs',
+));
+ */
 
 /**
  * Step 3: Define the Slim application routes
@@ -37,8 +48,28 @@ $app = new Slim();
  * The routes below work with PHP >= 5.3.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+$app->get('/login', function () use ($app) {
+  $login_link = '<a href="/login?login">login</a>';
+  try {
+    # Change 'localhost' to your domain name.
+    $openid = new LightOpenID('donelist.local');
+    if(!$openid->mode) {
+      if(isset($_GET['login'])) {
+          $openid->identity = 'https://www.google.com/accounts/o8/id';
+          $app->response()->header('Location', $openid->authUrl());
+      }
+      //echo $login_button;
+      echo "$login_link\n";
+    } elseif($openid->mode == 'cancel') {
+      echo 'User has canceled authentication!';
+    } else {
+      echo 'User ' . ($openid->validate() ? $openid->identity . ' has ' : 'has not ') . 'logged in.';
+    }
+  } catch(ErrorException $e) {
+    echo "got an error\n";
+    echo $e->getMessage();
+  }
+});
 
 //GET route
 $app->get('/', function () use ($app) {
