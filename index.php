@@ -11,6 +11,7 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+session_start();
 
 require('vendor/openid.php');
 require 'Slim/Slim.php';
@@ -25,11 +26,25 @@ require 'lib/done_list.php';
  */
 $app = new Slim();
 
-/*
-$app->add('Slim_Middleware_SessionCookie', array(
+$app->add(new Slim_Middleware_SessionCookie( array(
   'secret' => 'FDq8PMCb2GUzuHNBEsGpFRTFgEcyHKUs',
-));
- */
+)));
+
+function get_login_data() {
+  if(array_key_exists('u', $_SESSION)) {
+    return $_SESSION['u'];
+  }
+}
+
+function forget_login() {
+  if(array_key_exists('u', $_SESSION)) {
+    unset($_SESSION['u']);
+  }
+}
+
+function save_login($data) {
+  $_SESSION['u'] = $data;
+}
 
 /**
  * Step 3: Define the Slim application routes
@@ -49,32 +64,41 @@ $app->add('Slim_Middleware_SessionCookie', array(
  */
 
 $app->get('/login', function () use ($app) {
-  $login_link = '<a href="/login?login">login</a>';
   try {
     # Change 'localhost' to your domain name.
     $openid = new LightOpenID('donelist.local');
     if(!$openid->mode) {
       if(isset($_GET['login'])) {
           $openid->identity = 'https://www.google.com/accounts/o8/id';
+          $openid->required = array('contact/email');
           $app->response()->header('Location', $openid->authUrl());
       }
-      //echo $login_button;
-      echo "$login_link\n";
     } elseif($openid->mode == 'cancel') {
-      echo 'User has canceled authentication!';
+      $app->flash('error', 'Login cancelled.');
+      $app->redirect('/');
     } else {
-      echo 'User ' . ($openid->validate() ? $openid->identity . ' has ' : 'has not ') . 'logged in.';
+      save_login($openid->getAttributes());
+      $user = get_login_data();
+      $app->flash('success', 'You are logged in as '.$user['contact/email']);
+      $app->redirect('/');
     }
   } catch(ErrorException $e) {
-    echo "got an error\n";
-    echo $e->getMessage();
+    $app->flash('error', $e->getMessage());
+    $app->redirect('/');
   }
+});
+
+$app->get('/logout', function() use ($app) {
+  forget_login();
+  $app->flash('success', 'You are no longer logged in.');
+  $app->redirect('/');
 });
 
 //GET route
 $app->get('/', function () use ($app) {
   $items = array();
   $done = DoneList::find_all();
+  $user = get_login_data();
 
   if('application/json' == $app->request()->getContentType()){
     foreach($done as $item){
@@ -86,94 +110,10 @@ $app->get('/', function () use ($app) {
     echo(json_encode($items));
   }
   else {
-
-    foreach($done as $item){
-      array_push($items, '<li>'.$item['created_at'].' '.$item['subject'].'</li>');
-    }
-    $done_list = implode('', $items);
-    $template = <<<EOT
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Done List</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <!-- Le styles -->
-    <link href="assets/css/bootstrap.css" rel="stylesheet">
-    <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-      }
-    </style>
-    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
-    <!-- Le fav and touch icons -->
-    <link rel="shortcut icon" href="images/favicon.ico">
-    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
-  </head>
-
-  <body>
-
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="#">Done List</a>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#contact">Contact</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-
-      <h1>Done!</h1>
-      <ul class="unstyled">
-        $done_list
-      </ul>
-
-    </div> <!-- /container -->
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="assets/js/jquery.js"></script>
-    <script src="assets/js/bootstrap-transition.js"></script>
-    <script src="assets/js/bootstrap-alert.js"></script>
-    <script src="assets/js/bootstrap-modal.js"></script>
-    <script src="assets/js/bootstrap-dropdown.js"></script>
-    <script src="assets/js/bootstrap-scrollspy.js"></script>
-    <script src="assets/js/bootstrap-tab.js"></script>
-    <script src="assets/js/bootstrap-tooltip.js"></script>
-    <script src="assets/js/bootstrap-popover.js"></script>
-    <script src="assets/js/bootstrap-button.js"></script>
-    <script src="assets/js/bootstrap-collapse.js"></script>
-    <script src="assets/js/bootstrap-carousel.js"></script>
-    <script src="assets/js/bootstrap-typeahead.js"></script>
-
-  </body>
-</html>
-EOT;
-    echo $template;
+    $app->render('index.php', array(
+      'done'      => $done,
+      'user'      => $user,
+    ));
   }
 });
 
