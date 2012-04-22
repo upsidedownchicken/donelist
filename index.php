@@ -77,7 +77,7 @@ function save_login($data) {
 $app->get('/login', function () use ($app) {
   try {
     # Change 'localhost' to your domain name.
-    $openid = new LightOpenID('donelist.local');
+    $openid = new LightOpenID($_SERVER['SERVER_NAME']);
     if(!$openid->mode) {
       if(isset($_GET['login'])) {
           $openid->identity = 'https://www.google.com/accounts/o8/id';
