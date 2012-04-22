@@ -16,6 +16,7 @@ session_start();
 require('vendor/openid.php');
 require 'Slim/Slim.php';
 require 'lib/done_list.php';
+require 'lib/user.php';
 
 /**
  * Step 2: Instantiate the Slim application
@@ -29,6 +30,16 @@ $app = new Slim();
 $app->add(new Slim_Middleware_SessionCookie( array(
   'secret' => 'FDq8PMCb2GUzuHNBEsGpFRTFgEcyHKUs',
 )));
+
+function current_user() {
+  $data = get_login_data();
+
+  if(is_null($data)){
+    return NULL;
+  }
+
+  return User::find_by_email($data['contact/email']);
+}
 
 function get_login_data() {
   if(array_key_exists('u', $_SESSION)) {
@@ -77,6 +88,7 @@ $app->get('/login', function () use ($app) {
       $app->flash('error', 'Login cancelled.');
       $app->redirect('/');
     } else {
+      #TODO create records for new users
       save_login($openid->getAttributes());
       $user = get_login_data();
       $app->flash('success', 'You are logged in as '.$user['contact/email']);
@@ -96,18 +108,17 @@ $app->get('/logout', function() use ($app) {
 
 //GET route
 $app->get('/', function () use ($app) {
-  $items = array();
-  $done = DoneList::find_all();
-  $user = get_login_data();
+  $user = current_user();
+  $done = array();
+
+  if($user){
+    $done = DoneList::find_by_user_id($user->id);
+  }
 
   if('application/json' == $app->request()->getContentType()){
-    foreach($done as $item){
-      array_push($items, array('created_at' => $item['created_at'], 'subject' => $item['subject']));
-    }
-
     $response = $app->response();
     $response->header('Content-Type', 'application/json');
-    echo(json_encode($items));
+    echo(json_encode($done));
   }
   else {
     $app->render('index.php', array(
@@ -119,11 +130,25 @@ $app->get('/', function () use ($app) {
 
 //POST route
 $app->post('/', function () use ($app) {
-  $subject = $app->request()->post('s');
-  if(is_null($subject)){
-    $app->halt(400);
+  $user = current_user();
+
+  if($user){
+    $subject = $app->request()->post('s');
+
+    if(is_null($subject)){
+      $app->halt(400);
+    }
+
+    DoneList::create(array('subject' => $subject));
+
+    $app->flash('success', 'Added donelist item');
+    $app->redirect('/');
   }
-  DoneList::create(array('subject' => $subject));
+  else {
+    #TODO send WWW-Authenticate header
+    #see http://php.net/manual/en/features.http-auth.php
+    $app->halt(401);
+  }
 });
 
 //PUT route

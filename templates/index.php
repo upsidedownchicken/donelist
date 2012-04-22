@@ -52,7 +52,7 @@
             </ul>
             <ul class="nav pull-right">
               <?php if($user) : ?>
-              <li><a href="/"><?php echo $user['contact/email'] ?></a></li>
+              <li><a href="/"><?php echo $user->email ?></a></li>
               <?php endif ?>
             </ul>
           </div><!--/.nav-collapse -->
