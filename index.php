@@ -16,6 +16,11 @@ require('vendor/openid.php');
 require 'Slim/Slim.php';
 require 'lib/done_list.php';
 require 'lib/user.php';
+require 'lib/config.php';
+
+define('u', 'u');
+
+$C = new Config();
 
 /**
  * Step 2: Instantiate the Slim application
@@ -27,7 +32,7 @@ require 'lib/user.php';
 $app = new Slim();
 
 $app->add(new Slim_Middleware_SessionCookie( array(
-  'secret' => 'FDq8PMCb2GUzuHNBEsGpFRTFgEcyHKUs',
+  'secret' => $C->session_secret,
 )));
 
 function current_user() {
@@ -41,19 +46,19 @@ function current_user() {
 }
 
 function get_login_data() {
-  if(array_key_exists('u', $_SESSION)) {
-    return $_SESSION['u'];
+  if(array_key_exists(u, $_SESSION)) {
+    return $_SESSION[u];
   }
 }
 
 function forget_login() {
-  if(array_key_exists('u', $_SESSION)) {
-    unset($_SESSION['u']);
+  if(array_key_exists(u, $_SESSION)) {
+    unset($_SESSION[u]);
   }
 }
 
 function save_login($data) {
-  $_SESSION['u'] = $data;
+  $_SESSION[u] = $data;
 }
 
 /**
